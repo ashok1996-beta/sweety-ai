@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sweety AI</title>
+<style>
+* { box-sizing:border-box; }
+body {
+  margin:0; background:#100d19; color:white;
+  font-family:Arial,sans-serif;
+}
+header {
+  padding:22px; text-align:center;
+  background:#211631; font-size:25px;
+  color:#e8b9ff;
+}
+main { max-width:600px; margin:auto; padding:18px; }
+#chat {
+  height:55vh; overflow:auto; padding:12px;
+  background:#1b1725; border-radius:15px;
+}
+.msg { padding:12px; margin:10px 0;
+  border-radius:12px; line-height:1.5; }
+.bot { background:#39264c; }
+.user { background:#29374b; text-align:right; }
+input,select,button {
+  width:100%; padding:14px; margin-top:12px;
+  border:0; border-radius:10px; font-size:16px;
+}
+input,select { background:#292333; color:white; }
+button { background:#b76be0; color:white; font-weight:bold; }
+.row { display:flex; gap:8px; }
+.row button { flex:1; }
+small { color:#c7b7d3; }
+</style>
+</head>
+<body>
+<header>💜 SWEETY AI</header>
+<main>
+  <p>Hey Boss! Naan Sweety. 😊</p>
+  <div id="chat">
+    <div class="msg bot">
+      Hello Boss! How can I help you today?
+    </div>
+  </div>
+
+  <label>Choose Sweety's voice</label>
+  <select id="voice"></select>
+
+  <input id="message" placeholder="Type something to Sweety...">
+
+  <div class="row">
+    <button onclick="send()">Send</button>
+    <button onclick="listen()">🎙 Speak</button>
+  </div>
+  <button onclick="speak('Hello Boss! Naan Sweety. Eppadi irukkinga?')">
+    🔊 Test Female Voice
+  </button>
+  <p><small>Voice availability depends on voices installed on your phone.</small></p>
+</main>
+
+<script>
+const chat = document.getElementById("chat");
+const voiceSelect = document.getElementById("voice");
+let voices = [];
+
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  voiceSelect.innerHTML = "";
+
+  voices.forEach((v, i) => {
+    const option = document.createElement("option");
+    option.value = i;
+    option.textContent = v.name + " (" + v.lang + ")";
+    voiceSelect.appendChild(option);
+  });
+
+  const preferred = voices.findIndex(v =>
+    /female|woman|zira|samantha|google.*female/i.test(v.name)
+  );
+  if (preferred >= 0) voiceSelect.value = preferred;
+}
+
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function addMessage(text, type) {
+  const div = document.createElement("div");
+  div.className = "msg " + type;
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function speak(text) {
+  speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  const selected = voices[Number(voiceSelect.value)];
+
+  if (selected) {
+    utterance.voice = selected;
+    utterance.lang = selected.lang;
+  } else {
+    utterance.lang = "en-IN";
+  }
+
+  utterance.rate = 0.92;
+  utterance.pitch = 1.12;
+  speechSynthesis.speak(utterance);
+}
+
+function send() {
+  const input = document.getElementById("message");
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMessage(text, "user");
+  input.value = "";
+
+  const reply = "Hello Boss! Naan Sweety. Your message received. AI brain integration is our next step.";
+  addMessage(reply, "bot");
+  speak(reply);
+}
+
+function listen() {
+  const Recognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!Recognition) {
+    alert("Voice input is not supported in this browser.");
+    return;
+  }
+
+  const recognition = new Recognition();
+  recognition.lang = "en-IN";
+  recognition.onresult = event => {
+    document.getElementById("message").value =
+      event.results[0][0].transcript;
+    send();
+  };
+  recognition.start();
+}
+</script>
+</body>
+</html>
